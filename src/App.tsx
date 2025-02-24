@@ -1,17 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import cesaocLogo from './assets/cesaoc.jpeg'
-import Highlight from 'react-highlight'
+import 'highlight.js/styles/atom-one-dark.css'
+import hljs from 'highlight.js'
+
 import '../node_modules/highlight.js/styles/atom-one-dark.css'
 import './App.css'
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [currentChar, setCurrentChar] = useState('');
-  const [code , setCode] = useState('print("Hello World")\n\rimport better\n\rint(str(input("This is nice")))\x7F');
+  const [code , setCode] = useState('print("Hello World")\r\nimport better\r\nint(str(input("This is nice")))\x7F\x16');
   const [rightBar, setRightBar] = useState(0)
-  const [showNonPrintable, setShowNonPrintable] = useState(false)
+  const [showNonPrintable, setShowNonPrintable] = useState(true)
+
+  useEffect(() => {
+  console.log("showNonPrintable state:", showNonPrintable);
+}, [showNonPrintable]);
+
 
   useEffect(() => {
     if(localStorage.getItem('token')) {
@@ -21,16 +28,11 @@ function App() {
   },[])
 
   useEffect(() => {
+    hljs.highlightAll()
     for(let i = 0; i < code.length; i++) {
       document.getElementById(i.toString())?.addEventListener('click', () => {
         setCurrentChar(code[i])
       })
-      // let element = document.getElementById(i.toString());
-      // if(element!.innerText.charCodeAt(0) < 32 || element!.innerText.charCodeAt(0) === 127) {
-      //   let newchild = ReplaceNonPrintableChar(element!.innerText);
-      // }
-
-
     }
     return 
   })
@@ -39,18 +41,23 @@ function App() {
     <>
       <LeftBar />
       <Code  code={code} showNonPrintable={showNonPrintable}/>
-      <RightBar currentChar={currentChar} rightBar={rightBar} setShowNonPrintable={setShowNonPrintable} />
-      <VeryRightBar rightBar={rightBar} setRightBar={setRightBar}/>
+      <RightBar currentChar={currentChar} rightBar={rightBar} setShowNonPrintable={setShowNonPrintable} showNonPrintable={showNonPrintable}/>
+      <VeryRightBar rightBar={rightBar} setRightBar={setRightBar}/>                                                                                                                                                                                       
     </>
   )
 }
 
 function Code(props: { code : string , showNonPrintable : boolean}) {
+
   return (
     <div className="code-container">
-      <Highlight className="python">
-        {WrapEveryChracterinSpan(props.code,props.showNonPrintable)}
-      </Highlight>
+      <pre>
+        <code className="python">
+          {/* {...WrapEveryChracterinSpan(props.code,props.showNonPrintable)} */}
+          {props.code}
+        </code>
+      </pre>
+
     </div>
   )
 }
@@ -58,12 +65,15 @@ function Code(props: { code : string , showNonPrintable : boolean}) {
 
 
 function WrapEveryChracterinSpan(code: string, showNonPrintable : boolean) {
-  return code.split('').map((char, index) => {
-    if(showNonPrintable && ( char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) {
-      return ReplaceNonPrintableChar(char,index.toString());
+
+  let a = code.split('').map((char, index) => {
+    if(( char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) {
+      return ReplaceNonPrintableChar(char,index.toString(),showNonPrintable);
     }
     return <span id={index.toString()} className='character' key={index}>{char}</span>
   })
+  a.push(<h1>{showNonPrintable ? "Nice" : "KYS"}</h1>)
+  return a;
 }
 
 function LeftBar() {
@@ -83,7 +93,7 @@ function LeftBar() {
   )
 
 }
-function RightBar(props : {currentChar : string, rightBar : number,setShowNonPrintable : React.Dispatch<React.SetStateAction<boolean>>}) {
+function RightBar(props : {currentChar : string, rightBar : number,setShowNonPrintable : React.Dispatch<React.SetStateAction<boolean>>  , showNonPrintable : boolean}) {
   return (
     <>
     { props.rightBar === 0 &&
@@ -119,7 +129,8 @@ function RightBar(props : {currentChar : string, rightBar : number,setShowNonPri
         props.rightBar === 2 &&
       <div className="right-bar">
             <h1 className='color2'>Settings</h1>
-            <input type='checkbox' id='show-non-printable' defaultChecked={true} onChange={(e) => {props.setShowNonPrintable(e.target.checked)}} />
+            <input type='checkbox' id='show-non-printable' checked={props.showNonPrintable} onClick={() => {props.setShowNonPrintable(!props.showNonPrintable)}}   />
+            <h1>{props.showNonPrintable ? "Hi" : "Fuck you"}</h1>
       </div>
 
       }
@@ -152,11 +163,11 @@ function Seperator() {
   )
 }
 
-function NonPrintableCharacter(props : {char : string, id : string}) {
+function NonPrintableCharacter(props : {char : string, id : string , showNonPrintable : boolean}) {
   return (
     <>
     <Seperator/>
-    <span id={props.id} className="non-printable-character character">
+    <span id={props.id} className={"non-printable-character character" + (props.showNonPrintable ? " hidden" : "") }>
       {props.char}
     </span>
     <Seperator/>
@@ -166,76 +177,8 @@ function NonPrintableCharacter(props : {char : string, id : string}) {
   )
 }
 
-function ReplaceNonPrintableChar(char : string,id : string) {
-  let charCode = char.charCodeAt(0);
-  switch(charCode) {
-    case 0:
-      return <NonPrintableCharacter char='NUL' id={id}/>
-    case 1:
-      return <NonPrintableCharacter char='SOH' id={id}/>
-    case 2:
-      return <NonPrintableCharacter char='STX' id={id}/>
-    case 3:
-      return <NonPrintableCharacter char='ETX' id={id}/>
-    case 4:
-      return <NonPrintableCharacter char='EOT' id={id}/>
-    case 5:
-      return <NonPrintableCharacter char='ENQ' id={id}/>
-    case 6:
-      return <NonPrintableCharacter char='ACK' id={id}/>
-    case 7:
-      return <NonPrintableCharacter char='BEL' id={id}/>
-    case 8:
-      return <NonPrintableCharacter char='BS' id={id}/>
-    case 9:
-      return <NonPrintableCharacter char='TAB' id={id}/>
-    case 10:
-      return <NonPrintableCharacter char='LF' id={id}/>
-    case 11:
-      return <NonPrintableCharacter char='VT' id={id}/>
-    case 12:
-      return <NonPrintableCharacter char='FF' id={id}/>
-    case 13:
-      return <NonPrintableCharacter char='CR' id={id}/>
-    case 14:
-      return <NonPrintableCharacter char='SO' id={id}/>
-    case 15:
-      return <NonPrintableCharacter char='SI' id={id}/>
-    case 16:
-      return <NonPrintableCharacter char='DLE' id={id}/>
-    case 17:
-      return <NonPrintableCharacter char='DC1' id={id}/>
-    case 18:
-      return <NonPrintableCharacter char='DC2' id={id}/>
-    case 19:
-      return <NonPrintableCharacter char='DC3' id={id}/>
-    case 20:
-      return <NonPrintableCharacter char='DC4' id={id}/>
-    case 21:
-      return <NonPrintableCharacter char='NAK' id={id}/>
-    case 22:
-      return <NonPrintableCharacter char='SYN' id={id}/>
-    case 23:
-      return <NonPrintableCharacter char='ETB' id={id}/>
-    case 24:
-      return <NonPrintableCharacter char='CAN' id={id}/>
-    case 25:
-      return <NonPrintableCharacter char='EM' id={id}/>
-    case 26:
-      return <NonPrintableCharacter char='SUB' id={id}/>
-    case 27:
-      return <NonPrintableCharacter char='ESC' id={id}/>
-    case 28:
-      return <NonPrintableCharacter char='FS' id={id}/>
-    case 29:
-      return <NonPrintableCharacter char='GS' id={id}/>
-    case 30:
-      return <NonPrintableCharacter char='RS' id={id}/>
-    case 31:
-      return <NonPrintableCharacter char='US' id={id}/>
-    case 127:
-      return <NonPrintableCharacter char='DEL' id={id}/>
-  }
+function ReplaceNonPrintableChar(char : string,id : string , showNonPrintable : boolean) {
+  return <NonPrintableCharacter char={ReturnNonPrintableCharacterSymbol(char)!} id={id} showNonPrintable={showNonPrintable}/>
 }
 function ReturnNonPrintableCharacterSymbol(char : string) {
   let charCode = char.charCodeAt(0);
