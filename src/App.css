@@ -17,6 +17,9 @@ body{
 .character:hover {
   background-color: rgba(224, 213, 112,0.5);
 }
+.character .character:hover {
+  background-color: transparent; 
+}
 .left-bar{
   position: relative;
   height: 100%;
@@ -30,6 +33,7 @@ body{
   align-items: center;
   height: 100%;
   width: 300px;
+  overflow-x: auto;
 }
 .very-right-bar{
   position: relative;
@@ -116,5 +120,16 @@ h3:hover{
 }
 .hidden{
   display: none;
+
+}
+th {
+  font-size: 13px;
+}
+.test-case{
+  position: relative;
+  background-color: rgb(40, 44, 52);
+  width: 260px;
+  padding: 5px;
+  border-radius: 10px;
 
 }

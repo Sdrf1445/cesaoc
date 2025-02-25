@@ -3,6 +3,7 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import cesaocLogo from './assets/cesaoc.jpeg'
 import 'highlight.js/styles/atom-one-dark.css'
+import { renderToStaticMarkup } from "react-dom/server"
 import hljs from 'highlight.js'
 
 import '../node_modules/highlight.js/styles/atom-one-dark.css'
@@ -18,6 +19,9 @@ function App() {
   useEffect(() => {
   console.log("showNonPrintable state:", showNonPrintable);
 }, [showNonPrintable]);
+  useEffect(() => {
+  console.log("re-rendered");
+  })
 
 
   useEffect(() => {
@@ -29,13 +33,107 @@ function App() {
 
   useEffect(() => {
     hljs.highlightAll()
-    for(let i = 0; i < code.length; i++) {
-      document.getElementById(i.toString())?.addEventListener('click', () => {
-        setCurrentChar(code[i])
+
+    const codeElement = document.querySelector('code');
+    const fragment = document.createDocumentFragment();
+
+    codeElement?.childNodes.forEach((node) => {
+      if(node.nodeType === 3) {
+        node.textContent?.split('').forEach((char) => {
+          if(char.charCodeAt(0) === 1000) {
+            let nonprintable = <NonPrintableCharacter char={"CR"}/>
+            const lem = renderToStaticMarkup(nonprintable);
+            const parser = new DOMParser();
+            let elem = parser.parseFromString(lem, 'text/html');
+            let test = Array(...elem.body.children);
+            test.forEach((child) => {
+              fragment.appendChild(child);
+            })
+            return;
+          }
+          if(( char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) {
+            let nonprintable = <NonPrintableCharacter char={ReturnNonPrintableCharacterSymbol(char)!}/>
+            const lem = renderToStaticMarkup(nonprintable);
+            const parser = new DOMParser();
+            let elem = parser.parseFromString(lem, 'text/html');
+            let test = Array(...elem.body.children);
+            test.forEach((child) => {
+              fragment.appendChild(child);
+            })
+            return;
+          }
+          const span = document.createElement('span');
+          span.classList.add('character');
+          span.textContent = char;
+          fragment.appendChild(span);
+        })
+      } else {
+        let clone = fragment.appendChild(node.cloneNode(false));
+        node.textContent?.split('').forEach((char) => {
+          if(char.charCodeAt(0) === 1000) {
+            let nonprintable = <NonPrintableCharacter char={"CR"}/>
+            const lem = renderToStaticMarkup(nonprintable);
+            const parser = new DOMParser();
+            let elem = parser.parseFromString(lem, 'text/html');
+            let test = Array(...elem.body.children);
+            test.forEach((child) => {
+              fragment.appendChild(child);
+            })
+            return;
+          }
+          if(( char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) {
+            let nonprintable = <NonPrintableCharacter char={ReturnNonPrintableCharacterSymbol(char)!}/>
+            const lem = renderToStaticMarkup(nonprintable);
+            const parser = new DOMParser();
+            let elem = parser.parseFromString(lem, 'text/html');
+            let test = Array(...elem.body.children);
+            test.forEach((child) => {
+              fragment.appendChild(child);
+            })
+            return;
+          }
+          const span = document.createElement('span');
+          span.classList.add('character');
+          span.textContent = char;
+          clone.appendChild(span);
+        })
+      }
+    });
+    codeElement!.innerHTML = '';
+    codeElement?.appendChild(fragment);
+
+
+
+    let elements = document.getElementsByClassName("character");
+    for(let i = 0; i < elements.length; i++) {
+      elements.item(i)?.addEventListener('click', () => {
+        setCurrentChar(elements.item(i)!.textContent!)
       })
     }
-    return 
-  })
+
+  } , [code,showNonPrintable])
+  // useEffect(() => {
+  //   hljs.highlightAll()
+  //   
+  //   for(let i = 0; i < code.length; i++) {
+  //     document.getElementById(i.toString())?.addEventListener('click', () => {
+  //       setCurrentChar(code[i])
+  //     })
+  //   }
+  // })
+  useEffect(() => {
+    let elemenets = document.getElementsByClassName('non-printable-character');
+    for(let i = 0; i < elemenets.length; i++) {
+      elemenets.item(i)?.classList.toggle('hidden');
+    }
+    elemenets = document.getElementsByClassName('seperator');
+    for(let i = 0; i < elemenets.length; i++) {
+      elemenets.item(i)?.classList.toggle('hidden');
+    }
+  } , [showNonPrintable]);
+  useEffect(() => {
+    // fetch('http://0.0.0.0:8000/new.py').then((response) => response.text()).then((data) => {console.log(data); setCode(data)})
+  },[])
 
   return (
     <>
@@ -54,7 +152,7 @@ function Code(props: { code : string , showNonPrintable : boolean}) {
       <pre>
         <code className="python">
           {/* {...WrapEveryChracterinSpan(props.code,props.showNonPrintable)} */}
-          {props.code}
+          {props.code.replaceAll('\r', String.fromCharCode(1000))}
         </code>
       </pre>
 
@@ -72,7 +170,6 @@ function WrapEveryChracterinSpan(code: string, showNonPrintable : boolean) {
     }
     return <span id={index.toString()} className='character' key={index}>{char}</span>
   })
-  a.push(<h1>{showNonPrintable ? "Nice" : "KYS"}</h1>)
   return a;
 }
 
@@ -91,56 +188,75 @@ function LeftBar() {
       <h3 className='encoded'>Code #1</h3>
     </div>
   )
-
 }
 function RightBar(props : {currentChar : string, rightBar : number,setShowNonPrintable : React.Dispatch<React.SetStateAction<boolean>>  , showNonPrintable : boolean}) {
   return (
     <>
-    { props.rightBar === 0 &&
+      { props.rightBar === 0 &&
 
-      <div className="right-bar">
-        <h1 className='color2'>Character Details</h1>
-        {props.currentChar === "" ? <p>Click a character to see it's value</p> : 
-          <>
-            {props.currentChar.charCodeAt(0) < 32 || props.currentChar.charCodeAt(0) === 127 ? 
+        <div className="right-bar">
+          <h1 className='color2'>Character Details</h1>
+          {props.currentChar === "" ? <p>Click a character to see it's value</p> : 
+            <>
+              {props.currentChar.charCodeAt(0) < 32 || props.currentChar.charCodeAt(0) === 127 ? 
                 <h2 className='char-dis color1'>{ReturnNonPrintableCharacterSymbol(props.currentChar)}</h2>
                 :
                 <h2 className='char-dis color1'>{props.currentChar}</h2>
 
 
               }
-            <p className='color3'>ASCII Value : {props.currentChar.charCodeAt(0)}</p>
-            <p className='color3'> Binary Value : {props.currentChar.charCodeAt(0).toString(2)}</p>
-            <p className='color3'> Hex Value : {props.currentChar.charCodeAt(0).toString(16).toString().toUpperCase()}</p>
+              <p className='color3'>ASCII Value : {props.currentChar.charCodeAt(0)}</p>
+              <p className='color3'> Binary Value : {props.currentChar.charCodeAt(0).toString(2)}</p>
+              <p className='color3'> Hex Value : {props.currentChar.charCodeAt(0).toString(16).toString().toUpperCase()}</p>
 
-          </>
-        }
-      </div>
-    }
-    {
-        props.rightBar === 1 &&
-      <div className="right-bar">
-            <h1 className='color2'>ASCII Table</h1>
 
-      </div>
+            </>
+          }
 
-      }
-    {
-        props.rightBar === 2 &&
-      <div className="right-bar">
-            <h1 className='color2'>Settings</h1>
+          <div>
             <input type='checkbox' id='show-non-printable' checked={props.showNonPrintable} onClick={() => {props.setShowNonPrintable(!props.showNonPrintable)}}   />
-            <h1>{props.showNonPrintable ? "Hi" : "Fuck you"}</h1>
-      </div>
+            <label htmlFor='show-non-printable'>Show non-printable characters</label>
+          </div>
+        </div>
+      }
+      {
+        props.rightBar === 1 &&
+          <div className="right-bar">
+            <h1 className='color2'>Submit Answer</h1>
+            <TestCase input="print('Hello World')" number={1}/>
+          </div>
 
       }
-    {
-        props.rightBar === 3 &&
-      <div className="right-bar">
+      {
+        props.rightBar === 2 &&
+          <div className="right-bar">
             <h1 className='color2'>Submit Answer</h1>
-            <input type="text" placeholder="Enter Answer" />
+            <TestCase input="print('Hello World')" number={2}/>
+          </div>
 
-      </div>
+      }
+      {
+        props.rightBar === 3 &&
+          <div className="right-bar">
+            <h1 className='color2'>Submit Answer</h1>
+            <TestCase input="print('Hello World')" number={3}/>
+          </div>
+
+      }
+      {
+        props.rightBar === 4 &&
+          <div className="right-bar">
+            <h1 className='color2'>Submit Answer</h1>
+            <TestCase input="print('Hello World')" number={4}/>
+          </div>
+
+      }
+      {
+        props.rightBar === 5 &&
+          <div className="right-bar">
+            <h1 className='color2'>Submit Answer</h1>
+            <TestCase input="print('Hello World')" number={5}/>
+          </div>
 
       }
     </>
@@ -153,21 +269,40 @@ function VeryRightBar(props : {rightBar : number, setRightBar : React.Dispatch<R
       <div className={'icon' + (props.rightBar === 1 ? ' active' :  '')} onClick={() => props.setRightBar(1)}></div>
       <div className={'icon' + (props.rightBar === 2 ? ' active' :  '')} onClick={() => props.setRightBar(2)}></div>
       <div className={'icon' + (props.rightBar === 3 ? ' active' :  '')} onClick={() => props.setRightBar(3)}></div>
+      <div className={'icon' + (props.rightBar === 4 ? ' active' :  '')} onClick={() => props.setRightBar(4)}></div>
+      <div className={'icon' + (props.rightBar === 5 ? ' active' :  '')} onClick={() => props.setRightBar(5)}></div>
     </div>
+  )
+}
+function TestCase(props : {input : string , number : number}) {
+  return (
+    <>
+      <h2>Test Case {props.number}</h2>
+      <div className="test-case">
+      <pre>
+        <code>
+          {props.input}
+        </code>
+      </pre>
+      </div>
+      <br/>
+      <input className='answer-box' type="text" placeholder="Enter Answer" />
+      
+    </>
   )
 }
 
 function Seperator() {
   return (
-    <div className="seperator"> </div>
+    <div className="seperator hidden"> </div>
   )
 }
 
-function NonPrintableCharacter(props : {char : string, id : string , showNonPrintable : boolean}) {
+function NonPrintableCharacter(props : {char : string}) {
   return (
     <>
     <Seperator/>
-    <span id={props.id} className={"non-printable-character character" + (props.showNonPrintable ? " hidden" : "") }>
+    <span className={"non-printable-character character hidden"}>
       {props.char}
     </span>
     <Seperator/>
@@ -177,8 +312,8 @@ function NonPrintableCharacter(props : {char : string, id : string , showNonPrin
   )
 }
 
-function ReplaceNonPrintableChar(char : string,id : string , showNonPrintable : boolean) {
-  return <NonPrintableCharacter char={ReturnNonPrintableCharacterSymbol(char)!} id={id} showNonPrintable={showNonPrintable}/>
+function ReplaceNonPrintableChar(char : string) {
+  return <NonPrintableCharacter char={ReturnNonPrintableCharacterSymbol(char)!}  />
 }
 function ReturnNonPrintableCharacterSymbol(char : string) {
   let charCode = char.charCodeAt(0);
