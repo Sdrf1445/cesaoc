@@ -12,9 +12,9 @@ import './App.css'
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [currentChar, setCurrentChar] = useState('');
-  const [code , setCode] = useState('print("Hello World")\r\nimport better\r\nint(str(input("This is nice")))\x7F\x16');
+  const [code , setCode] = useState('iIlL print("Hello World")\r\nimport better\r\nint(str(input("This is nice")))\x7F\x16');
   const [rightBar, setRightBar] = useState(0)
-  const [showNonPrintable, setShowNonPrintable] = useState(true)
+  const [showNonPrintable, setShowNonPrintable] = useState(false)
 
   useEffect(() => {
   console.log("showNonPrintable state:", showNonPrintable);
@@ -32,6 +32,9 @@ function App() {
   },[])
 
   useEffect(() => {
+    if(!loggedIn) {
+      return;
+    }
     hljs.highlightAll()
 
     const codeElement = document.querySelector('code');
@@ -111,7 +114,7 @@ function App() {
       })
     }
 
-  } , [code,showNonPrintable])
+  } , [code,showNonPrintable,loggedIn])
   // useEffect(() => {
   //   hljs.highlightAll()
   //   
@@ -121,6 +124,9 @@ function App() {
   //     })
   //   }
   // })
+  useEffect(() => {
+    console.log("currentChar state:", currentChar);
+  } , [currentChar])
   useEffect(() => {
     let elemenets = document.getElementsByClassName('non-printable-character');
     for(let i = 0; i < elemenets.length; i++) {
@@ -137,11 +143,30 @@ function App() {
 
   return (
     <>
-      <LeftBar />
-      <Code  code={code} showNonPrintable={showNonPrintable}/>
-      <RightBar currentChar={currentChar} rightBar={rightBar} setShowNonPrintable={setShowNonPrintable} showNonPrintable={showNonPrintable}/>
-      <VeryRightBar rightBar={rightBar} setRightBar={setRightBar}/>                                                                                                                                                                                       
+      { loggedIn ? 
+        <>
+          <LeftBar />
+          <Code  code={code} showNonPrintable={showNonPrintable}/>
+          <RightBar currentChar={currentChar} rightBar={rightBar} setShowNonPrintable={setShowNonPrintable} showNonPrintable={showNonPrintable}/>
+          <VeryRightBar rightBar={rightBar} setRightBar={setRightBar}/>                                                                                                                                                                                       
+        </>
+        :
+        <Login setLoggedIn={setLoggedIn}/>
+      }
     </>
+  )
+}
+
+function Login(props : {setLoggedIn : React.Dispatch<React.SetStateAction<boolean>>}) {
+  return (
+    <div className='main'>
+      <div className="login">
+        <h1>Login</h1>
+        <input type="text" placeholder="Username"/>
+        <input type="password" placeholder="Password"/>
+        <button onClick={() => {props.setLoggedIn(true)}}>Login</button>
+      </div>
+    </div>
   )
 }
 
@@ -198,23 +223,37 @@ function RightBar(props : {currentChar : string, rightBar : number,setShowNonPri
           <h1 className='color2'>Character Details</h1>
           {props.currentChar === "" ? <p>Click a character to see it's value</p> : 
             <>
-              {props.currentChar.charCodeAt(0) < 32 || props.currentChar.charCodeAt(0) === 127 ? 
-                <h2 className='char-dis color1'>{ReturnNonPrintableCharacterSymbol(props.currentChar)}</h2>
-                :
-                <h2 className='char-dis color1'>{props.currentChar}</h2>
+              {/* {props.currentChar.charCodeAt(0) < 32 || props.currentChar.charCodeAt(0) === 127 ?  */}
+              {/*   <h2 className='char-dis color1'>{ReturnNonPrintableCharacterSymbol(props.currentChar)}</h2> */}
+              {/*   : */}
+              {/*   <h2 className='char-dis color1'>{props.currentChar}</h2> */}
+
+
+              {/* } */}
+              
+              <h2 className='char-dis color1'>{props.currentChar}</h2>
+              {props.currentChar.length > 1 ? 
+                <>
+                  <p className='color3'>ASCII Value : {ReturnASCIIFromSYMBOL(props.currentChar)}</p>
+                  <p className='color3'> Binary Value : {ReturnASCIIFromSYMBOL(props.currentChar)!.toString(2)}</p>
+                  <p className='color3'> Hex Value : {ReturnASCIIFromSYMBOL(props.currentChar)!.toString(16).toString().toUpperCase()}</p>
+                </>
+                  :
+                <>
+                  <p className='color3'>ASCII Value : {props.currentChar.charCodeAt(0)}</p>
+                  <p className='color3'> Binary Value : {props.currentChar.charCodeAt(0).toString(2)}</p>
+                  <p className='color3'> Hex Value : {props.currentChar.charCodeAt(0).toString(16).toString().toUpperCase()}</p>
+                </>
 
 
               }
-              <p className='color3'>ASCII Value : {props.currentChar.charCodeAt(0)}</p>
-              <p className='color3'> Binary Value : {props.currentChar.charCodeAt(0).toString(2)}</p>
-              <p className='color3'> Hex Value : {props.currentChar.charCodeAt(0).toString(16).toString().toUpperCase()}</p>
 
 
             </>
           }
 
           <div>
-            <input type='checkbox' id='show-non-printable' checked={props.showNonPrintable} onClick={() => {props.setShowNonPrintable(!props.showNonPrintable)}}   />
+            <input type='checkbox' id='show-non-printable' checked={props.showNonPrintable}  onChange={(e) => {props.setShowNonPrintable(e.target.checked)}}  />
             <label htmlFor='show-non-printable'>Show non-printable characters</label>
           </div>
         </div>
@@ -223,7 +262,7 @@ function RightBar(props : {currentChar : string, rightBar : number,setShowNonPri
         props.rightBar === 1 &&
           <div className="right-bar">
             <h1 className='color2'>Submit Answer</h1>
-            <TestCase input="print('Hello World')" number={1}/>
+            <TestCase input={"5\n1\n5\n5"} number={1}/>
           </div>
 
       }
@@ -286,7 +325,10 @@ function TestCase(props : {input : string , number : number}) {
       </pre>
       </div>
       <br/>
-      <input className='answer-box' type="text" placeholder="Enter Answer" />
+      {/* <input className='answer-box' type="text" placeholder="Enter Answer" /> */}
+      <textarea rows={3}></textarea>
+      <br/>
+      <button>Submit</button>
       
     </>
   )
@@ -386,6 +428,77 @@ function ReturnNonPrintableCharacterSymbol(char : string) {
       return 'DEL'
   }
 
+}
+
+function ReturnASCIIFromSYMBOL(symbol : string) {
+  switch(symbol) {
+    case 'NUL':
+      return 0
+    case 'SOH':
+      return 1
+    case 'STX':
+      return 2
+    case 'ETX':
+      return 3
+    case 'EOT':
+      return 4
+    case 'ENQ':
+      return 5
+    case 'ACK':
+      return 6
+    case 'BEL':
+      return 7
+    case 'BS':
+      return 8
+    case 'TAB':
+      return 9
+    case 'LF':
+      return 10
+    case 'VT':
+      return 11
+    case 'FF':
+      return 12
+    case 'CR':
+      return 13
+    case 'SO':
+      return 14
+    case 'SI':
+      return 15
+    case 'DLE':
+      return 16
+    case 'DC1':
+      return 17
+    case 'DC2':
+      return 18
+    case 'DC3':
+      return 19
+    case 'DC4':
+      return 20
+    case 'NAK':
+      return 21
+    case 'SYN':
+      return 22
+    case 'ETB':
+      return 23
+    case 'CAN':
+      return 24
+    case 'EM':
+      return 25
+    case 'SUB':
+      return 26
+    case 'ESC':
+      return 27
+    case 'FS':
+      return 28
+    case 'GS':
+      return 29
+    case 'RS':
+      return 30
+    case 'US':
+      return 31
+    case 'DEL':
+      return 127
+  }
 }
 export default App
 
