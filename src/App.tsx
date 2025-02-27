@@ -5,9 +5,32 @@ import cesaocLogo from './assets/cesaoc.jpeg'
 import 'highlight.js/styles/atom-one-dark.css'
 import { renderToStaticMarkup } from "react-dom/server"
 import hljs from 'highlight.js'
+import { useMutation } from '@tanstack/react-query';
+import axios, { AxiosError } from 'axios';
+
 
 import '../node_modules/highlight.js/styles/atom-one-dark.css'
 import './App.css'
+
+
+
+interface LoginProps {
+  setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+interface LoginResponse {
+  token: string;
+}
+
+interface ErrorResponse {
+  message: string;
+}
+
+interface LoginCredentials {
+  usernameOrEmail: string;
+  password: string;
+}
+
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -157,18 +180,60 @@ function App() {
   )
 }
 
-function Login(props : {setLoggedIn : React.Dispatch<React.SetStateAction<boolean>>}) {
+function Login({ setLoggedIn }: LoginProps) {
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const loginMutation = useMutation<LoginResponse, AxiosError<ErrorResponse>, { usernameOrEmail: string; password: string }>({
+    mutationFn: async ({ usernameOrEmail, password }) => {
+      const response = await axios.post('http://localhost:8000/api/login', {
+        usernameOrEmail,
+        password,
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      localStorage.setItem('token', data.token);
+      setLoggedIn(true);
+    },
+    onError: (error) => {
+      alert(error.response?.data?.message || 'Login failed');
+    },
+  });
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usernameOrEmail || !password) {
+      alert('Please enter both username/email and password');
+      return;
+    }
+    loginMutation.mutate({ usernameOrEmail, password });
+  };
+
   return (
     <div className='main'>
       <div className="login">
         <h1>Login</h1>
-        <input type="text" placeholder="Username"/>
-        <input type="password" placeholder="Password"/>
-        <button onClick={() => {props.setLoggedIn(true)}}>Login</button>
+        <input
+          type="text"
+          placeholder="Username"
+          value={usernameOrEmail}
+          onChange={(e) => setUsernameOrEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button onClick={() => loginMutation.mutate({ usernameOrEmail, password })} disabled={loginMutation.isPending}>
+          {loginMutation.isPending ? 'Logging in...' : 'Login'}
+        </button>
       </div>
     </div>
-  )
+  );
 }
+
 
 function Code(props: { code : string , showNonPrintable : boolean}) {
 
