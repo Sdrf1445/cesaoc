@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useEffect, useState } from 'react'
 import cesaocLogo from './assets/cesaoc.jpeg'
 import icon1 from './assets/icon1.png'
 import icon2 from './assets/icon2.png'
@@ -306,14 +304,6 @@ const loginMutation = useMutation<LoginResponse, AxiosError<ErrorResponse>, { us
   },
 });
 
-const handleLogin = (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!usernameOrEmail || !password) {
-    alert('Please enter both username/email and password');
-    return;
-  }
-  loginMutation.mutate({ usernameOrEmail, password });
-};
 
 return (
   <div className='main'>
@@ -510,7 +500,7 @@ function RightBar(props : {question : any ,  currentChar : string, rightBar : nu
     </>
   )
 }
-function VeryRightBar(props : {testCase : any,rightBar : number, setRightBar : React.Dispatch<React.SetStateAction<number>>}) {
+function VeryRightBar(props : {rightBar : number, setRightBar : React.Dispatch<React.SetStateAction<number>>}) {
   return (
     <div className="very-right-bar">
       <div className={'icon' + (props.rightBar === 0 ? ' active' :  '')} onClick={() => props.setRightBar(0)}>
@@ -607,9 +597,6 @@ function NonPrintableCharacter(props : {char : string}) {
   )
 }
 
-function ReplaceNonPrintableChar(char : string) {
-  return <NonPrintableCharacter char={ReturnNonPrintableCharacterSymbol(char)!}  />
-}
 function ReturnNonPrintableCharacterSymbol(char : string) {
   let charCode = char.charCodeAt(0);
   switch(charCode) {
