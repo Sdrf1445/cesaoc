@@ -20,11 +20,32 @@ body{
 .character .character:hover {
   background-color: transparent; 
 }
-.left-bar{
+.left-bar h3 {
+  font-size: 1rem;
   position: relative;
-  height: 100%;
-  width: 200px;
+  margin: 10px 0;
+  transition: all 0.3s ease;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  background-color: rgba(40, 44, 52, 0.6);
 }
+
+.left-bar h3:hover {
+  background-color: rgba(255, 165, 0, 0.7);
+  transform: translateX(10px);
+  color: #000;
+}
+
+.left-bar h3.active {
+  background-color: orange;
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(255, 165, 0, 0.4);
+}
+
+
+
 .right-bar{
   position: relative;
   display: flex;
@@ -69,13 +90,38 @@ h1{
   padding: 5px;
   border-radius: 10px;
 }
-.left-bar-header{
+
+.left-bar {
+  position: relative;
+  height: 100%;
+  width: 220px;
+  background-color: rgba(20, 20, 40, 0.8);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+  padding: 0 10px;
+  transition: all 0.3s ease;
+}
+
+.left-bar-header {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 10%;
+  height: 80px;
   width: 100%;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 15px;
+}
+
+.left-bar-header img {
+  margin-right: 10px;
+}
+
+.left-bar-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f0f0f0;
+  letter-spacing: 1px;
+  margin: 0;
 }
 .color1{
   color: #07B131;
@@ -86,9 +132,14 @@ h1{
 .color3{
   color: #F7F607;
 }
-.team-number{
-  margin: 10px;
+.team-number {
+  margin: 15px 0;
   text-align: center;
+  font-size: 1.2rem;
+  color: #07B131;
+  background-color: rgba(7, 177, 49, 0.1);
+  padding: 8px;
+  border-radius: 8px;
 }
 h3{
   font-size: 1rem;
@@ -163,4 +214,21 @@ input[type="text"]{
 input[type="password"]{
   border-radius: 10px;
   padding: 5px;
+}
+
+button {
+  background-color: #07B131;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background-color: #059a29;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
