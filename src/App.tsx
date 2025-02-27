@@ -38,7 +38,11 @@ function App() {
   const [code , setCode] = useState('iIlL print("Hello World")\r\nimport better\r\nint(str(input("This is nice")))\x7F\x16');
   const [rightBar, setRightBar] = useState(0)
   const [showNonPrintable, setShowNonPrintable] = useState(false)
+  const [questions, setQuestions] = useState<any>([])
 
+
+  console.log(questions);
+  
   useEffect(() => {
   console.log("showNonPrintable state:", showNonPrintable);
 }, [showNonPrintable]);
@@ -168,7 +172,7 @@ function App() {
     <>
       { loggedIn ? 
         <>
-          <LeftBar />
+          <LeftBar setQuestions={setQuestions}/>
           <Code  code={code} showNonPrintable={showNonPrintable}/>
           <RightBar currentChar={currentChar} rightBar={rightBar} setShowNonPrintable={setShowNonPrintable} showNonPrintable={showNonPrintable}/>
           <VeryRightBar rightBar={rightBar} setRightBar={setRightBar}/>                                                                                                                                                                                       
@@ -263,22 +267,64 @@ function WrapEveryChracterinSpan(code: string, showNonPrintable : boolean) {
   return a;
 }
 
-function LeftBar() {
+function LeftBar(props : {setQuestions :  React.Dispatch<React.SetStateAction<Array<any>>>}) {
+  const [codes, setCodes] = useState<string[]>([]); 
+  const [loading, setLoading] = useState<boolean>(true); 
+  const [error, setError] = useState<string | null>(null); 
+
+  useEffect(() => {
+    const fetchCodes = async () => {
+      try {
+        const token = localStorage.getItem('token'); 
+        if (!token) {
+          throw new Error('No token found');
+        }
+
+        const response = await axios.get('http://localhost:8000/api/questions', {
+          headers: {
+            Authorization: `Bearer ${token}`, 
+          },
+        });
+        
+        
+        const codeTitles = response.data.map((question: any) => question.title);
+        setCodes(codeTitles);
+        props.setQuestions(response.data)
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to fetch codes');
+        console.log(err);
+        
+        setLoading(false);
+      }
+    };
+
+    fetchCodes();
+  }, []);
+
+  if (loading) {
+    return <div className="left-bar">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="left-bar">{error}</div>;
+  }
+
+
   return (
     <div className="left-bar">
       <div className="left-bar-header">
-        <img src={cesaocLogo} alt="Cesaoc Logo" width={"70"}/>
-        <h1> CESA OC </h1>
+        <img src={cesaocLogo} alt="Cesaoc Logo" width={"70"} />
+        <h1>CESA OC</h1>
       </div>
       <h2 className='team-number'>Team 4</h2>
-      <h3 className='encoded'>Code #1</h3>
-      <h3 className='encoded'>Code #1</h3>
-      <h3 className='encoded'>Code #1</h3>
-      <h3 className='encoded'>Code #1</h3>
-      <h3 className='encoded'>Code #1</h3>
+      {codes.map((code, index) => (
+        <h3 key={index} className='encoded'>Code #{code}</h3>
+      ))}
     </div>
-  )
+  );
 }
+
 function RightBar(props : {currentChar : string, rightBar : number,setShowNonPrintable : React.Dispatch<React.SetStateAction<boolean>>  , showNonPrintable : boolean}) {
   return (
     <>
