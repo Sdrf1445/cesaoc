@@ -2,10 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import cesaocLogo from './assets/cesaoc.jpeg'
+import icon1 from './assets/icon1.png'
+import icon2 from './assets/icon2.png'
+import icon3 from './assets/icon3.png'
+import icon4 from './assets/icon4.png'
+import icon5 from './assets/icon5.png'
+import magnify from './assets/magnify.png'
 import 'highlight.js/styles/atom-one-dark.css'
 import { renderToStaticMarkup } from "react-dom/server"
 import hljs from 'highlight.js'
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, UseMutationResult } from '@tanstack/react-query';
 import axios, { AxiosError } from 'axios';
 
 
@@ -16,6 +22,60 @@ import './App.css'
 
 interface LoginProps {
   setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+  userMutation: UseMutationResult<UserResponse, AxiosError<ErrorResponse>, { username: string }>;
+}
+
+interface SolvedQuestion {
+  questionId: string;
+  solvedAt: string;
+  _id: string;
+}
+
+interface SolvedTestCase {
+  testCaseId: string;
+  solvedAt: string;
+  _id: string;
+}
+
+interface TeamResponse {
+  team: Team;
+}
+interface Team{
+  _id: string;
+  name: string;
+  members: string[];
+  score: number;
+  solvedQuestions: SolvedQuestion[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  solvedTestCases: SolvedTestCase[];
+}
+
+interface SubmitResponse {
+  submission: {
+    testCaseId: string;
+    teamId: string;
+    submittedOutput: string;
+    isCorrect: boolean;
+    attemptNumber: number;
+    _id: string;
+    createdAt: string; // Consider using Date if you plan to parse it
+    updatedAt: string; // Same as above
+    __v: number;
+  };
+}
+interface UserResponse {
+  user: User;
+}
+interface User{
+  _id: string;
+  username: string;
+  password: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  team: string;
 }
 
 interface LoginResponse {
@@ -26,10 +86,14 @@ interface ErrorResponse {
   message: string;
 }
 
-interface LoginCredentials {
-  usernameOrEmail: string;
-  password: string;
-}
+// interface ErrorResponse2{
+//   submittedOutput: string;
+// }
+
+// interface LoginCredentials {
+//   usernameOrEmail: string;
+//   password: string;
+// }
 
 
 function App() {
@@ -37,34 +101,75 @@ function App() {
   const [currentChar, setCurrentChar] = useState('');
   const [code , setCode] = useState('iIlL print("Hello World")\r\nimport better\r\nint(str(input("This is nice")))\x7F\x16');
   const [rightBar, setRightBar] = useState(0)
-  const [showNonPrintable, setShowNonPrintable] = useState(false)
+  const [showNonPrintable, setShowNonPrintable] = useState(true)
   const [questions, setQuestions] = useState<any>([])
+  const [currentQuestion , setCurrentQuestion] = useState<any>(undefined);
+  const [currentQuestionIndex,setCurrentQuestionIndex] = useState<number>(NaN);
+  const [team , setTeam] = useState<string>('');
 
 
   console.log(questions);
   
-  useEffect(() => {
-  console.log("showNonPrintable state:", showNonPrintable);
-}, [showNonPrintable]);
-  useEffect(() => {
-  console.log("re-rendered");
-  })
 
 
   useEffect(() => {
     if(localStorage.getItem('token')) {
       setLoggedIn(true)
+      userMutation.mutate({username : JSON.parse(atob(localStorage.getItem('token')!.split('.')[1])).username});
     };
-
   },[])
+
+  const userMutation = useMutation<UserResponse, AxiosError<ErrorResponse>, { username: string}>({
+    mutationFn: async ({ username }) => {
+      const response = await axios.get('http://localhost:8000/api/userInformation/' + username , {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      teamMutation.mutate({teamid : data.user.team});
+    },
+    onError: () => {
+      console.log("oh");
+    },
+  });
+  const teamMutation = useMutation<TeamResponse, AxiosError<ErrorResponse>, { teamid : string}>({
+    mutationFn: async ({ teamid}) => {
+      const response = await axios.get('http://localhost:8000/api/team/' + teamid,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      console.log(data);
+      setTeam(data.team.name);
+    },
+    onError: () => {
+      console.log("oh");
+    },
+  });
 
   useEffect(() => {
     if(!loggedIn) {
       return;
     }
+    const codeElement = document.querySelector('code');
+
+    if(codeElement?.dataset.highlighted)
+    {
+      delete codeElement?.dataset.highlighted;
+    }
+
+
     hljs.highlightAll()
 
-    const codeElement = document.querySelector('code');
+
     const fragment = document.createDocumentFragment();
 
     codeElement?.childNodes.forEach((node) => {
@@ -141,16 +246,8 @@ function App() {
       })
     }
 
-  } , [code,showNonPrintable,loggedIn])
-  // useEffect(() => {
-  //   hljs.highlightAll()
-  //   
-  //   for(let i = 0; i < code.length; i++) {
-  //     document.getElementById(i.toString())?.addEventListener('click', () => {
-  //       setCurrentChar(code[i])
-  //     })
-  //   }
-  // })
+  } , [code,loggedIn])
+   
   useEffect(() => {
     console.log("currentChar state:", currentChar);
   } , [currentChar])
@@ -164,115 +261,119 @@ function App() {
       elemenets.item(i)?.classList.toggle('hidden');
     }
   } , [showNonPrintable]);
-  useEffect(() => {
-    // fetch('http://0.0.0.0:8000/new.py').then((response) => response.text()).then((data) => {console.log(data); setCode(data)})
-  },[])
 
   return (
     <>
       { loggedIn ? 
         <>
-          <LeftBar setQuestions={setQuestions}/>
+          <LeftBar team={team} currentQuestionIndex={currentQuestionIndex} setCurrentQuestionIndex={setCurrentQuestionIndex} setCode={setCode} questions={questions} setQuestions={setQuestions} setCurrentQuestion={setCurrentQuestion}/>
           <Code  code={code} showNonPrintable={showNonPrintable}/>
-          <RightBar currentChar={currentChar} rightBar={rightBar} setShowNonPrintable={setShowNonPrintable} showNonPrintable={showNonPrintable}/>
+          <RightBar question={currentQuestion}  currentChar={currentChar} rightBar={rightBar} setShowNonPrintable={setShowNonPrintable} showNonPrintable={showNonPrintable}/>
           <VeryRightBar rightBar={rightBar} setRightBar={setRightBar}/>                                                                                                                                                                                       
-        </>
-        :
-        <Login setLoggedIn={setLoggedIn}/>
-      }
-    </>
-  )
+      </>
+      :
+      <Login userMutation={userMutation} setLoggedIn={setLoggedIn}/>
+        
+    }
+  </>
+)
 }
 
-function Login({ setLoggedIn }: LoginProps) {
-  const [usernameOrEmail, setUsernameOrEmail] = useState('');
-  const [password, setPassword] = useState('');
+function Login({ setLoggedIn , userMutation }: LoginProps) {
+const [usernameOrEmail, setUsernameOrEmail] = useState('');
+const [password, setPassword] = useState('');
 
-  const loginMutation = useMutation<LoginResponse, AxiosError<ErrorResponse>, { usernameOrEmail: string; password: string }>({
-    mutationFn: async ({ usernameOrEmail, password }) => {
-      const response = await axios.post('http://localhost:8000/api/login', {
-        usernameOrEmail,
-        password,
-      });
-      return response.data;
-    },
-    onSuccess: (data) => {
+
+
+const loginMutation = useMutation<LoginResponse, AxiosError<ErrorResponse>, { usernameOrEmail: string; password: string }>({
+  mutationFn: async ({ usernameOrEmail, password }) => {
+    const response = await axios.post('http://localhost:8000/api/login', {
+      usernameOrEmail,
+      password,
+    });
+    return response.data;
+  },
+  onSuccess: (data) => {
       localStorage.setItem('token', data.token);
+      let userName = JSON.parse(atob(data.token.split('.')[1])).username;
+      userMutation.mutate({username : userName});
       setLoggedIn(true);
-    },
-    onError: (error) => {
-      alert(error.response?.data?.message || 'Login failed');
-    },
-  });
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!usernameOrEmail || !password) {
-      alert('Please enter both username/email and password');
-      return;
-    }
-    loginMutation.mutate({ usernameOrEmail, password });
-  };
+    
+  },
+  onError: (error) => {
+    alert(error.response?.data?.message || 'Login failed');
+  },
+});
 
-  return (
-    <div className='main'>
-      <div className="login">
-        <h1>Login</h1>
-        <input
-          type="text"
-          placeholder="Username"
-          value={usernameOrEmail}
-          onChange={(e) => setUsernameOrEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button onClick={() => loginMutation.mutate({ usernameOrEmail, password })} disabled={loginMutation.isPending}>
-          {loginMutation.isPending ? 'Logging in...' : 'Login'}
-        </button>
-      </div>
+const handleLogin = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!usernameOrEmail || !password) {
+    alert('Please enter both username/email and password');
+    return;
+  }
+  loginMutation.mutate({ usernameOrEmail, password });
+};
+
+return (
+  <div className='main'>
+    <div className="login">
+      <h1>Login</h1>
+      <input
+        type="text"
+        placeholder="Username"
+        value={usernameOrEmail}
+        onChange={(e) => setUsernameOrEmail(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <button onClick={() => loginMutation.mutate({ usernameOrEmail, password })} disabled={loginMutation.isPending}>
+        {loginMutation.isPending ? 'Logging in...' : 'Login'}
+      </button>
     </div>
-  );
+  </div>
+);
 }
 
 
 function Code(props: { code : string , showNonPrintable : boolean}) {
 
-  return (
-    <div className="code-container">
-      <pre>
-        <code className="python">
-          {/* {...WrapEveryChracterinSpan(props.code,props.showNonPrintable)} */}
-          {props.code.replaceAll('\r', String.fromCharCode(1000))}
-        </code>
-      </pre>
+return (
+  <div className="code-container">
+    <pre>
+      <code className="python">
+        {/* {...WrapEveryChracterinSpan(props.code,props.showNonPrintable)} */}
+        {props.code.replaceAll('\r', String.fromCharCode(1000))}
+      </code>
+    </pre>
 
-    </div>
-  )
+  </div>
+)
 }
 
 
 
-function WrapEveryChracterinSpan(code: string, showNonPrintable : boolean) {
+// function WrapEveryChracterinSpan(code: string, showNonPrintable : boolean) {
 
-  let a = code.split('').map((char, index) => {
-    if(( char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) {
-      return ReplaceNonPrintableChar(char,index.toString(),showNonPrintable);
-    }
-    return <span id={index.toString()} className='character' key={index}>{char}</span>
-  })
-  return a;
-}
+//   let a = code.split('').map((char, index) => {
+//     if(( char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) {
+//       return ReplaceNonPrintableChar(char,index.toString(),showNonPrintable);
+//     }
+//     return <span id={index.toString()} className='character' key={index}>{char}</span>
+//   })
+//   return a;
+// }
 
-function LeftBar(props : {setQuestions :  React.Dispatch<React.SetStateAction<Array<any>>>}) {
-  const [codes, setCodes] = useState<string[]>([]); 
-  const [loading, setLoading] = useState<boolean>(true); 
-  const [error, setError] = useState<string | null>(null); 
+function LeftBar(props : { team : string ,  currentQuestionIndex : number , setCurrentQuestionIndex : React.Dispatch<React.SetStateAction<number>> , setCurrentQuestion : React.Dispatch<React.SetStateAction<any>> , setCode : React.Dispatch<React.SetStateAction<string>> , questions : any ,  setQuestions :  React.Dispatch<React.SetStateAction<Array<any>>>}) {
+const [codes, setCodes] = useState<string[]>([]); 
+const [loading, setLoading] = useState<boolean>(true); 
+const [error, setError] = useState<string | null>(null); 
 
-  useEffect(() => {
+useEffect(() => {
     const fetchCodes = async () => {
       try {
         const token = localStorage.getItem('token'); 
@@ -317,15 +418,17 @@ function LeftBar(props : {setQuestions :  React.Dispatch<React.SetStateAction<Ar
         <img src={cesaocLogo} alt="Cesaoc Logo" width={"70"} />
         <h1>CESA OC</h1>
       </div>
-      <h2 className='team-number'>Team 4</h2>
+      
+      <h2 className='team-number'>Team {props.team}</h2>
+      {/* <h2 className='team-number'>User {JSON.parse(atob(localStorage.getItem('token')?.split('.')[1]!)).username}</h2> */}
       {codes.map((code, index) => (
-        <h3 key={index} className='encoded'>Code #{code}</h3>
+        <h3 key={index} className={props.currentQuestionIndex === index ? "active" : ""} onClick={() => {props.setCode(atob(props.questions[index].description));props.setCurrentQuestion(props.questions[index]);props.setCurrentQuestionIndex(index)}}>Code #{code}</h3>
       ))}
     </div>
   );
 }
 
-function RightBar(props : {currentChar : string, rightBar : number,setShowNonPrintable : React.Dispatch<React.SetStateAction<boolean>>  , showNonPrintable : boolean}) {
+function RightBar(props : {question : any ,  currentChar : string, rightBar : number,setShowNonPrintable : React.Dispatch<React.SetStateAction<boolean>>  , showNonPrintable : boolean}) {
   return (
     <>
       { props.rightBar === 0 &&
@@ -355,14 +458,9 @@ function RightBar(props : {currentChar : string, rightBar : number,setShowNonPri
                   <p className='color3'> Binary Value : {props.currentChar.charCodeAt(0).toString(2)}</p>
                   <p className='color3'> Hex Value : {props.currentChar.charCodeAt(0).toString(16).toString().toUpperCase()}</p>
                 </>
-
-
               }
-
-
             </>
           }
-
           <div>
             <input type='checkbox' id='show-non-printable' checked={props.showNonPrintable}  onChange={(e) => {props.setShowNonPrintable(e.target.checked)}}  />
             <label htmlFor='show-non-printable'>Show non-printable characters</label>
@@ -370,84 +468,128 @@ function RightBar(props : {currentChar : string, rightBar : number,setShowNonPri
         </div>
       }
       {
-        props.rightBar === 1 &&
+        (props.rightBar === 1 && props.question && props.question.testCases && props.question.testCases[0]) &&
           <div className="right-bar">
             <h1 className='color2'>Submit Answer</h1>
-            <TestCase input={"5\n1\n5\n5"} number={1}/>
+            <TestCase question={props.question} number={1}/>
           </div>
 
       }
       {
-        props.rightBar === 2 &&
+        (props.rightBar === 2 && props.question && props.question.testCases && props.question.testCases[1]) && 
           <div className="right-bar">
             <h1 className='color2'>Submit Answer</h1>
-            <TestCase input="print('Hello World')" number={2}/>
+            <TestCase question={props.question} number={2}/>
           </div>
 
       }
       {
-        props.rightBar === 3 &&
+        (props.rightBar === 3 && props.question && props.question.testCases && props.question.testCases[2]) &&
           <div className="right-bar">
             <h1 className='color2'>Submit Answer</h1>
-            <TestCase input="print('Hello World')" number={3}/>
+            <TestCase question={props.question} number={3}/>
           </div>
 
       }
       {
-        props.rightBar === 4 &&
+        (props.rightBar === 4  && props.question && props.question.testCases && props.question.testCases[3]) &&
           <div className="right-bar">
             <h1 className='color2'>Submit Answer</h1>
-            <TestCase input="print('Hello World')" number={4}/>
+            <TestCase question={props.question} number={4}/>
           </div>
 
       }
       {
-        props.rightBar === 5 &&
+        (props.rightBar === 5 && props.question && props.question.testCases && props.question.testCases[4]) &&
           <div className="right-bar">
             <h1 className='color2'>Submit Answer</h1>
-            <TestCase input="print('Hello World')" number={5}/>
+            <TestCase question={props.question} number={5}/>
           </div>
 
       }
     </>
   )
 }
-function VeryRightBar(props : {rightBar : number, setRightBar : React.Dispatch<React.SetStateAction<number>>}) {
+function VeryRightBar(props : {testCase : any,rightBar : number, setRightBar : React.Dispatch<React.SetStateAction<number>>}) {
   return (
     <div className="very-right-bar">
-      <div className={'icon' + (props.rightBar === 0 ? ' active' :  '')} onClick={() => props.setRightBar(0)}></div>
-      <div className={'icon' + (props.rightBar === 1 ? ' active' :  '')} onClick={() => props.setRightBar(1)}></div>
-      <div className={'icon' + (props.rightBar === 2 ? ' active' :  '')} onClick={() => props.setRightBar(2)}></div>
-      <div className={'icon' + (props.rightBar === 3 ? ' active' :  '')} onClick={() => props.setRightBar(3)}></div>
-      <div className={'icon' + (props.rightBar === 4 ? ' active' :  '')} onClick={() => props.setRightBar(4)}></div>
-      <div className={'icon' + (props.rightBar === 5 ? ' active' :  '')} onClick={() => props.setRightBar(5)}></div>
+      <div className={'icon' + (props.rightBar === 0 ? ' active' :  '')} onClick={() => props.setRightBar(0)}>
+        <img src={magnify} alt="Magnify" width={50} height={50} />
+      </div>
+      <div className={'icon' + (props.rightBar === 1 ? ' active' :  '')} onClick={() => props.setRightBar(1)}>
+        <img src={icon1} alt="Icon 1" width={50} height={50} />
+      </div>
+      <div className={'icon' + (props.rightBar === 2 ? ' active' :  '')} onClick={() => props.setRightBar(2)}>
+        <img src={icon2} alt="Icon 2" width={50} height={50} />
+      </div>
+      <div className={'icon' + (props.rightBar === 3 ? ' active' :  '')} onClick={() => props.setRightBar(3)}>
+        <img src={icon3} alt="Icon 3" width={50} height={50} />
+      </div>
+      <div className={'icon' + (props.rightBar === 4 ? ' active' :  '')} onClick={() => props.setRightBar(4)}>
+        <img src={icon4} alt="Icon 4" width={50} height={50} />
+      </div>
+      <div className={'icon' + (props.rightBar === 5 ? ' active' :  '')} onClick={() => props.setRightBar(5)}>
+        <img src={icon5} alt="Icon 5" width={50} height={50} />
+      </div>
     </div>
   )
 }
-function TestCase(props : {input : string , number : number}) {
+function TestCase(props : {question : any , number : number}) {
+
+  const [answer, setAnswer] = useState('');
+  const [message, setMessage] = useState('');
+  const submitMutation= useMutation<SubmitResponse, AxiosError<ErrorResponse>, { testCaseId: string; submittedOutput: string }>({
+    mutationFn: async ({ testCaseId, submittedOutput}) => {
+      const response = await axios.post('http://localhost:8000/api/submit', {
+        testCaseId,
+        submittedOutput
+      },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if(data.submission.isCorrect) {
+        setMessage('Correct Answer');
+      }
+      else{
+        setMessage('Incorrect Answer');
+      }
+    },
+    onError: (error) => {
+        setMessage(error.response?.data?.message || 'Submission failed or empty submission');
+    },
+  });
   return (
     <>
       <h2>Test Case {props.number}</h2>
       <div className="test-case">
       <pre>
         <code>
-          {props.input}
+            {atob(props.question.testCases[props.number - 1]?.input)}
         </code>
       </pre>
       </div>
       <br/>
       {/* <input className='answer-box' type="text" placeholder="Enter Answer" /> */}
-      <textarea rows={3}></textarea>
+      <textarea rows={3} onChange={(e) => {setAnswer(e.target.value)}}></textarea>
       <br/>
-      <button>Submit</button>
+      <p>{message}</p>
+      <button onClick={() => {submitMutation.mutate({testCaseId : props.question.testCases[props.number - 1]?._id , submittedOutput : btoa(answer)})}}>Submit</button>
       
     </>
   )
 }
 
+
+
 function Seperator() {
   return (
-    <div className="seperator hidden"> </div>
+    <div className="seperator"> </div>
   )
 }
 
@@ -455,7 +597,7 @@ function NonPrintableCharacter(props : {char : string}) {
   return (
     <>
     <Seperator/>
-    <span className={"non-printable-character character hidden"}>
+    <span className={"non-printable-character character"}>
       {props.char}
     </span>
     <Seperator/>
