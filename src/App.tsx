@@ -109,7 +109,6 @@ function App() {
   console.log(questions);
   
 
-
   useEffect(() => {
     if(localStorage.getItem('token')) {
       setLoggedIn(true)
@@ -119,7 +118,7 @@ function App() {
 
   const userMutation = useMutation<UserResponse, AxiosError<ErrorResponse>, { username: string}>({
     mutationFn: async ({ username }) => {
-      const response = await axios.get('http://localhost:8000/api/userInformation/' + username , {
+      const response = await axios.get('https://iustcesa.ir/api/userInformation/' + username , {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -136,7 +135,7 @@ function App() {
   });
   const teamMutation = useMutation<TeamResponse, AxiosError<ErrorResponse>, { teamid : string}>({
     mutationFn: async ({ teamid}) => {
-      const response = await axios.get('http://localhost:8000/api/team/' + teamid,
+      const response = await axios.get('https://iustcesa.ir/api/team/' + teamid,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -285,7 +284,7 @@ const [password, setPassword] = useState('');
 
 const loginMutation = useMutation<LoginResponse, AxiosError<ErrorResponse>, { usernameOrEmail: string; password: string }>({
   mutationFn: async ({ usernameOrEmail, password }) => {
-    const response = await axios.post('http://localhost:8000/api/login', {
+    const response = await axios.post('https://iustcesa.ir/api/login', {
       usernameOrEmail,
       password,
     });
@@ -371,7 +370,7 @@ useEffect(() => {
           throw new Error('No token found');
         }
 
-        const response = await axios.get('http://localhost:8000/api/questions', {
+        const response = await axios.get('https://iustcesa.ir/api/questions', {
           headers: {
             Authorization: `Bearer ${token}`, 
           },
@@ -530,7 +529,7 @@ function TestCase(props : {question : any , number : number}) {
   const [message, setMessage] = useState('');
   const submitMutation= useMutation<SubmitResponse, AxiosError<ErrorResponse>, { testCaseId: string; submittedOutput: string }>({
     mutationFn: async ({ testCaseId, submittedOutput}) => {
-      const response = await axios.post('http://localhost:8000/api/submit', {
+      const response = await axios.post('https://iustcesa.ir/api/submit', {
         testCaseId,
         submittedOutput
       },
