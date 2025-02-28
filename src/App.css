@@ -99,6 +99,7 @@ h1{
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
   padding: 0 10px;
   transition: all 0.3s ease;
+  overflow-x: auto;
 }
 
 .left-bar-header {
