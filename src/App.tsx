@@ -498,7 +498,7 @@ function VeryRightBar(props : {veryRightBarAnswer : Array<number> , currentQuest
       <div className={'icon' + (props.rightBar === 2 ? ' active' :  '') + (props.currentQuestion?.testCases[1]?.hasSolved || props.veryRightBarAnswer[1] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[1]?.hasSolved === false && props.currentQuestion?.testCases[1]?.canSubmit === false || props.veryRightBarAnswer[1] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(2)}>
         <img src={icon2} alt="Icon 2" width={50} height={50} />
       </div>
-      <div className={'icon' + (props.rightBar === 3 ? ' active' :  '') + (props.currentQuestion?.testCases[2]?.hasSolved || props.veryRightBarAnswer[2] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[1]?.hasSolved === false && props.currentQuestion?.testCases[2]?.canSubmit === false || props.veryRightBarAnswer[2] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(3)}>
+      <div className={'icon' + (props.rightBar === 3 ? ' active' :  '') + (props.currentQuestion?.testCases[2]?.hasSolved || props.veryRightBarAnswer[2] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[2]?.hasSolved === false && props.currentQuestion?.testCases[2]?.canSubmit === false || props.veryRightBarAnswer[2] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(3)}>
         <img src={icon3} alt="Icon 3" width={50} height={50} />
       </div>
     </div>
@@ -512,8 +512,8 @@ function TestCase(props : {setVeryRightAnswer : React.Dispatch<React.SetStateAct
     mutationFn: async ({ testCaseId, submittedOutput}) => {
       const response = await axios.post('https://iustcesa.ir/api/submit', {
         testCaseId,
-        submittedOutput
-      },
+      submittedOutput
+    },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
