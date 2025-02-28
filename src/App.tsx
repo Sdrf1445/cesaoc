@@ -3,8 +3,6 @@ import cesaocLogo from './assets/cesaoc.jpeg'
 import icon1 from './assets/icon1.png'
 import icon2 from './assets/icon2.png'
 import icon3 from './assets/icon3.png'
-import icon4 from './assets/icon4.png'
-import icon5 from './assets/icon5.png'
 import magnify from './assets/magnify.png'
 import 'highlight.js/styles/atom-one-dark.css'
 import { renderToStaticMarkup } from "react-dom/server"
@@ -97,13 +95,14 @@ interface ErrorResponse {
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [currentChar, setCurrentChar] = useState('');
-  const [code , setCode] = useState('iIlL print("Hello World")\r\nimport better\r\nint(str(input("This is nice")))\x7F\x16');
+  const [code , setCode] = useState('');
   const [rightBar, setRightBar] = useState(0)
   const [showNonPrintable, setShowNonPrintable] = useState(true)
   const [questions, setQuestions] = useState<any>([])
   const [currentQuestion , setCurrentQuestion] = useState<any>(undefined);
   const [currentQuestionIndex,setCurrentQuestionIndex] = useState<number>(NaN);
   const [team , setTeam] = useState<string>('');
+  const [veryrightAnswer, setVeryRightAnswer] = useState([0,0,0]);
 
 
   console.log(questions);
@@ -246,6 +245,10 @@ function App() {
   } , [code,loggedIn])
    
   useEffect(() => {
+    console.log(currentQuestion);
+
+  } , [currentQuestion])
+  useEffect(() => {
     console.log("currentChar state:", currentChar);
   } , [currentChar])
   useEffect(() => {
@@ -265,8 +268,8 @@ function App() {
         <>
           <LeftBar team={team} currentQuestionIndex={currentQuestionIndex} setCurrentQuestionIndex={setCurrentQuestionIndex} setCode={setCode} questions={questions} setQuestions={setQuestions} setCurrentQuestion={setCurrentQuestion}/>
           <Code  code={code} showNonPrintable={showNonPrintable}/>
-          <RightBar question={currentQuestion}  currentChar={currentChar} rightBar={rightBar} setShowNonPrintable={setShowNonPrintable} showNonPrintable={showNonPrintable}/>
-          <VeryRightBar rightBar={rightBar} setRightBar={setRightBar}/>                                                                                                                                                                                       
+          <RightBar setVeryRightAnswer={setVeryRightAnswer}  question={currentQuestion}  currentChar={currentChar} rightBar={rightBar} setShowNonPrintable={setShowNonPrintable} showNonPrintable={showNonPrintable}/>
+          <VeryRightBar veryRightBarAnswer={veryrightAnswer} currentQuestion={currentQuestion} rightBar={rightBar} setRightBar={setRightBar}/>                                                                                                                                                                                       
       </>
       :
       <Login userMutation={userMutation} setLoggedIn={setLoggedIn}/>
@@ -357,7 +360,7 @@ return (
 //   return a;
 // }
 
-function LeftBar(props : { team : string ,  currentQuestionIndex : number , setCurrentQuestionIndex : React.Dispatch<React.SetStateAction<number>> , setCurrentQuestion : React.Dispatch<React.SetStateAction<any>> , setCode : React.Dispatch<React.SetStateAction<string>> , questions : any ,  setQuestions :  React.Dispatch<React.SetStateAction<Array<any>>>}) {
+function LeftBar(props : {  team : string ,  currentQuestionIndex : number , setCurrentQuestionIndex : React.Dispatch<React.SetStateAction<number>> , setCurrentQuestion : React.Dispatch<React.SetStateAction<any>> , setCode : React.Dispatch<React.SetStateAction<string>> , questions : any ,  setQuestions :  React.Dispatch<React.SetStateAction<Array<any>>>}) {
 const [codes, setCodes] = useState<string[]>([]); 
 const [loading, setLoading] = useState<boolean>(true); 
 const [error, setError] = useState<string | null>(null); 
@@ -417,7 +420,7 @@ useEffect(() => {
   );
 }
 
-function RightBar(props : {question : any ,  currentChar : string, rightBar : number,setShowNonPrintable : React.Dispatch<React.SetStateAction<boolean>>  , showNonPrintable : boolean}) {
+function RightBar(props : { setVeryRightAnswer : React.Dispatch<React.SetStateAction<Array<number>>> ,question : any ,  currentChar : string, rightBar : number,setShowNonPrintable : React.Dispatch<React.SetStateAction<boolean>>  , showNonPrintable : boolean}) {
   return (
     <>
       { props.rightBar === 0 &&
@@ -460,7 +463,7 @@ function RightBar(props : {question : any ,  currentChar : string, rightBar : nu
         (props.rightBar === 1 && props.question && props.question.testCases && props.question.testCases[0]) &&
           <div className="right-bar">
             <h1 className='color2'>Submit Answer</h1>
-            <TestCase question={props.question} number={1}/>
+            <TestCase setVeryRightAnswer={props.setVeryRightAnswer}  question={props.question} number={1}/>
           </div>
 
       }
@@ -468,7 +471,7 @@ function RightBar(props : {question : any ,  currentChar : string, rightBar : nu
         (props.rightBar === 2 && props.question && props.question.testCases && props.question.testCases[1]) && 
           <div className="right-bar">
             <h1 className='color2'>Submit Answer</h1>
-            <TestCase question={props.question} number={2}/>
+            <TestCase  setVeryRightAnswer={props.setVeryRightAnswer} question={props.question} number={2}/>
           </div>
 
       }
@@ -476,54 +479,32 @@ function RightBar(props : {question : any ,  currentChar : string, rightBar : nu
         (props.rightBar === 3 && props.question && props.question.testCases && props.question.testCases[2]) &&
           <div className="right-bar">
             <h1 className='color2'>Submit Answer</h1>
-            <TestCase question={props.question} number={3}/>
-          </div>
-
-      }
-      {
-        (props.rightBar === 4  && props.question && props.question.testCases && props.question.testCases[3]) &&
-          <div className="right-bar">
-            <h1 className='color2'>Submit Answer</h1>
-            <TestCase question={props.question} number={4}/>
-          </div>
-
-      }
-      {
-        (props.rightBar === 5 && props.question && props.question.testCases && props.question.testCases[4]) &&
-          <div className="right-bar">
-            <h1 className='color2'>Submit Answer</h1>
-            <TestCase question={props.question} number={5}/>
+            <TestCase  setVeryRightAnswer={props.setVeryRightAnswer} question={props.question} number={3}/>
           </div>
 
       }
     </>
   )
 }
-function VeryRightBar(props : {rightBar : number, setRightBar : React.Dispatch<React.SetStateAction<number>>}) {
+function VeryRightBar(props : {veryRightBarAnswer : Array<number> , currentQuestion : any,rightBar : number, setRightBar : React.Dispatch<React.SetStateAction<number>>}) {
   return (
     <div className="very-right-bar">
       <div className={'icon' + (props.rightBar === 0 ? ' active' :  '')} onClick={() => props.setRightBar(0)}>
         <img src={magnify} alt="Magnify" width={50} height={50} />
       </div>
-      <div className={'icon' + (props.rightBar === 1 ? ' active' :  '')} onClick={() => props.setRightBar(1)}>
+      <div className={'icon' + (props.rightBar === 1 ? ' active' :  '') + (props.currentQuestion?.testCases[0]?.hasSolved || props.veryRightBarAnswer[0] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[0]?.canSubmit === false || props.veryRightBarAnswer[0] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(1)}>
         <img src={icon1} alt="Icon 1" width={50} height={50} />
       </div>
-      <div className={'icon' + (props.rightBar === 2 ? ' active' :  '')} onClick={() => props.setRightBar(2)}>
+      <div className={'icon' + (props.rightBar === 2 ? ' active' :  '') + (props.currentQuestion?.testCases[1]?.hasSolved || props.veryRightBarAnswer[1] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[1]?.canSubmit === false || props.veryRightBarAnswer[1] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(2)}>
         <img src={icon2} alt="Icon 2" width={50} height={50} />
       </div>
-      <div className={'icon' + (props.rightBar === 3 ? ' active' :  '')} onClick={() => props.setRightBar(3)}>
+      <div className={'icon' + (props.rightBar === 3 ? ' active' :  '') + (props.currentQuestion?.testCases[2]?.hasSolved || props.veryRightBarAnswer[2] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[2]?.canSubmit === false || props.veryRightBarAnswer[2] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(3)}>
         <img src={icon3} alt="Icon 3" width={50} height={50} />
-      </div>
-      <div className={'icon' + (props.rightBar === 4 ? ' active' :  '')} onClick={() => props.setRightBar(4)}>
-        <img src={icon4} alt="Icon 4" width={50} height={50} />
-      </div>
-      <div className={'icon' + (props.rightBar === 5 ? ' active' :  '')} onClick={() => props.setRightBar(5)}>
-        <img src={icon5} alt="Icon 5" width={50} height={50} />
       </div>
     </div>
   )
 }
-function TestCase(props : {question : any , number : number}) {
+function TestCase(props : {setVeryRightAnswer : React.Dispatch<React.SetStateAction<Array<number>>>, question : any , number : number}) {
 
   const [answer, setAnswer] = useState('');
   const [message, setMessage] = useState('');
@@ -544,13 +525,17 @@ function TestCase(props : {question : any , number : number}) {
     onSuccess: (data) => {
       if(data.submission.isCorrect) {
         setMessage('Correct Answer');
+        props.setVeryRightAnswer((prev) => prev.map((value,index) => index === props.number - 1 ? 1 : value));
       }
       else{
         setMessage('Incorrect Answer');
       }
     },
     onError: (error) => {
-        setMessage(error.response?.data?.message || 'Submission failed or empty submission');
+      if(error.status === 444) {
+          props.setVeryRightAnswer((prev) => prev.map((value,index) => index === props.number - 1 ? 2 : value));
+      }
+      setMessage(error.response?.data?.message || 'Submission failed or empty submission');
     },
   });
   return (
