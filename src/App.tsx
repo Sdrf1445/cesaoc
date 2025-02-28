@@ -413,7 +413,7 @@ useEffect(() => {
       
       <h2 className='team-number'>Team {props.team}</h2>
       {/* <h2 className='team-number'>User {JSON.parse(atob(localStorage.getItem('token')?.split('.')[1]!)).username}</h2> */}
-      {codes.map((code, index) => (
+      {codes.sort().map((code, index) => (
         <h3 key={index} className={props.currentQuestionIndex === index ? "active" : ""} onClick={() => {props.setCode(atob(props.questions[index].description));props.setCurrentQuestion(props.questions[index]);props.setCurrentQuestionIndex(index)}}>Code #{code}</h3>
       ))}
     </div>
@@ -492,13 +492,13 @@ function VeryRightBar(props : {veryRightBarAnswer : Array<number> , currentQuest
       <div className={'icon' + (props.rightBar === 0 ? ' active' :  '')} onClick={() => props.setRightBar(0)}>
         <img src={magnify} alt="Magnify" width={50} height={50} />
       </div>
-      <div className={'icon' + (props.rightBar === 1 ? ' active' :  '') + (props.currentQuestion?.testCases[0]?.hasSolved || props.veryRightBarAnswer[0] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[0]?.canSubmit === false || props.veryRightBarAnswer[0] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(1)}>
+      <div className={'icon' + (props.rightBar === 1 ? ' active' :  '') + (props.currentQuestion?.testCases[0]?.hasSolved || props.veryRightBarAnswer[0] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[0]?.hasSolved === false && props.currentQuestion?.testCases[0]?.canSubmit === false || props.veryRightBarAnswer[0] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(1)}>
         <img src={icon1} alt="Icon 1" width={50} height={50} />
       </div>
-      <div className={'icon' + (props.rightBar === 2 ? ' active' :  '') + (props.currentQuestion?.testCases[1]?.hasSolved || props.veryRightBarAnswer[1] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[1]?.canSubmit === false || props.veryRightBarAnswer[1] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(2)}>
+      <div className={'icon' + (props.rightBar === 2 ? ' active' :  '') + (props.currentQuestion?.testCases[1]?.hasSolved || props.veryRightBarAnswer[1] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[1]?.hasSolved === false && props.currentQuestion?.testCases[1]?.canSubmit === false || props.veryRightBarAnswer[1] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(2)}>
         <img src={icon2} alt="Icon 2" width={50} height={50} />
       </div>
-      <div className={'icon' + (props.rightBar === 3 ? ' active' :  '') + (props.currentQuestion?.testCases[2]?.hasSolved || props.veryRightBarAnswer[2] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[2]?.canSubmit === false || props.veryRightBarAnswer[2] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(3)}>
+      <div className={'icon' + (props.rightBar === 3 ? ' active' :  '') + (props.currentQuestion?.testCases[2]?.hasSolved || props.veryRightBarAnswer[2] == 1 ? " correct" : "") + (props.currentQuestion?.testCases[1]?.hasSolved === false && props.currentQuestion?.testCases[2]?.canSubmit === false || props.veryRightBarAnswer[2] == 2 ? " wrong" : "")} onClick={() => props.setRightBar(3)}>
         <img src={icon3} alt="Icon 3" width={50} height={50} />
       </div>
     </div>
